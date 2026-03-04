@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kplace</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="authContainer">
+      <div id="userInfo">
+        <div id="profileMenu">
+          <div class="menu-panel">
+            <div class="menu-header">
+              <div class="username-display" id="usernameDisplay"></div>
+              <button id="profileBtn" title="프로필">
+                <img src="src/defaultprofile.png" alt="프로필" />
+              </button>
+            </div>
+            <div class="menu-body">
+              <div class="email-display" id="emailDisplay"></div>
+              <button class="logout-btn" id="logoutBtn">로그아웃</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="authButtons">
+        <button id="loginBtn" class="auth-btn">로그인</button>
+        <button id="registerBtn" class="auth-btn">회원가입</button>
+      </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+      <div class="modal-content">
+        <h2>로그인</h2>
+        <div class="form-group">
+          <label>KAIST 이메일</label>
+          <div class="email-input-group">
+            <input type="text" id="loginEmail" placeholder="username" />
+            <span>@kaist.ac.kr</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>비밀번호</label>
+          <input type="password" id="loginPassword" placeholder="비밀번호" />
+        </div>
+        <div class="error-message" id="loginError"></div>
+        <div class="modal-buttons">
+          <button class="cancel-btn" id="loginCancelBtn">취소</button>
+          <button class="submit-btn" id="loginSubmitBtn">로그인</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="registerModal" class="modal">
+      <div class="modal-content">
+        <h2>회원가입</h2>
+        <div class="form-group">
+          <label>사용자 이름</label>
+          <input type="text" id="registerUsername" placeholder="사용자 이름" />
+        </div>
+        <div class="form-group">
+          <label>KAIST 이메일</label>
+          <div class="email-input-group">
+            <input type="text" id="registerEmail" placeholder="username" />
+            <span>@kaist.ac.kr</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>비밀번호 (6자 이상)</label>
+          <input type="password" id="registerPassword" placeholder="비밀번호" />
+        </div>
+        <div class="error-message" id="registerError"></div>
+        <div class="success-message" id="registerSuccess"></div>
+        <div class="modal-buttons">
+          <button class="cancel-btn" id="registerCancelBtn">취소</button>
+          <button class="submit-btn" id="registerSubmitBtn">가입하기</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="info">
+      <p>노드: <span id="nodeCount">0</span></p>
+      <p>웨이: <span id="wayCount">0</span></p>
+    </div>
+    <div id="floatingToolbar">
+      <button id="toggleOpacityBtn" title="픽셀 투명도 토글">
+        <img src="src/opacity.png" alt="투명도 토글" />
+      </button>
+      <div id="paintBtnContainer">
+        <button id="paintBtn">
+          <img src="src/pen.png" alt="pen" /><span>시작하기</span>
+        </button>
+        <div id="colorPalette"></div>
+      </div>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
