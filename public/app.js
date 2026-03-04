@@ -112,11 +112,15 @@ document
     }
   });
 
-document.getElementById("registerBtn").addEventListener("click", () => {
-  document.getElementById("registerModal").classList.add("show");
-  document.getElementById("registerError").classList.remove("show");
-  document.getElementById("registerSuccess").classList.remove("show");
-});
+document
+  .getElementById("loginToRegisterLink")
+  .addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("loginModal").classList.remove("show");
+    document.getElementById("registerModal").classList.add("show");
+    document.getElementById("registerError").classList.remove("show");
+    document.getElementById("registerSuccess").classList.remove("show");
+  });
 
 document.getElementById("registerCancelBtn").addEventListener("click", () => {
   document.getElementById("registerModal").classList.remove("show");
@@ -220,7 +224,6 @@ const map = new maplibregl.Map({
 
 map.touchZoomRotate.disableRotation();
 
-let selectedAreaData = null;
 let selectedAreaType = null;
 let selectedAreaBounds = null;
 let selectedAreaPolygonPoints = [];
@@ -238,6 +241,10 @@ const cellPixelChanges = new Map();
 
 let activeCellId = null;
 let mapReady = false;
+const VISIBLE_IMAGE_REFRESH_INTERVAL_MS = 10000;
+const VISIBLE_IMAGE_REFRESH_MIN_ZOOM = 16;
+let visibleImageRefreshIntervalId = null;
+let isPeriodicVisibleImageRefreshRunning = false;
 
 const PALETTE_COLORS = [
   "#000000",
@@ -279,6 +286,8 @@ let isMouseDown = false;
 let isLayerOpacityEnabled = false;
 let isEraseMode = false;
 const paintBtn = document.getElementById("paintBtn");
+const currentLocationBtn = document.getElementById("currentLocationBtn");
+let currentLocationMarker = null;
 
 const pixelHighlight = (() => {
   const el = document.createElement("img");
@@ -768,6 +777,33 @@ async function updateVisibleCellImages() {
   updateModifiedPixelHighlights(view);
 }
 
+async function refreshVisibleCellImagesPeriodically() {
+  if (isPeriodicVisibleImageRefreshRunning) {
+    return;
+  }
+
+  if (!mapReady || map.getZoom() <= VISIBLE_IMAGE_REFRESH_MIN_ZOOM) {
+    return;
+  }
+
+  isPeriodicVisibleImageRefreshRunning = true;
+  try {
+    await updateVisibleCellImages();
+  } finally {
+    isPeriodicVisibleImageRefreshRunning = false;
+  }
+}
+
+function startVisibleImageRefreshInterval() {
+  if (visibleImageRefreshIntervalId !== null) {
+    return;
+  }
+
+  visibleImageRefreshIntervalId = setInterval(() => {
+    refreshVisibleCellImagesPeriodically();
+  }, VISIBLE_IMAGE_REFRESH_INTERVAL_MS);
+}
+
 function findCellIdAtLatLng(latlng) {
   for (const [cellId, cell] of gridCellById.entries()) {
     if (boundsContainLatLng(cell.bounds, latlng)) {
@@ -989,11 +1025,6 @@ async function discardPixelChanges() {
 }
 
 function generateGrid() {
-  if (!selectedAreaData || !selectedAreaBounds) {
-    alert("selected-area.json 영역을 먼저 불러와야 합니다");
-    return;
-  }
-
   clearGrid();
 
   const south = selectedAreaBounds.south;
@@ -1039,10 +1070,6 @@ function generateGrid() {
     }
 
     row += 1;
-  }
-
-  if (gridCellById.size === 0) {
-    alert("생성된 격자가 없습니다");
   }
 
   updateVisibleCellImages();
@@ -1188,7 +1215,7 @@ async function loadOsmData() {
     const response = await fetch("/api/osm-data");
     await response.json();
   } catch (error) {
-    console.error("데이터 로드 오류:", error);
+    console.error("Data load error:", error);
   }
 }
 
@@ -1212,43 +1239,27 @@ function fitMapToBounds(bounds) {
 }
 
 async function loadSelectedArea() {
-  try {
-    const response = await fetch("/api/selected-area");
-    const areaData = await response.json();
+  const response = await fetch("/api/selected-area");
+  const areaData = await response.json();
 
-    selectedAreaData = areaData;
+  if (areaData.type === "polygon") {
+    selectedAreaType = "polygon";
+    selectedAreaPolygonPoints = areaData.points;
+    selectedAreaBounds = getBoundsFromPoints(areaData.points);
+    fitMapToBounds(selectedAreaBounds);
+    map.setZoom(17.4);
+  } else {
+    selectedAreaType = "rectangle";
+    selectedAreaPolygonPoints = [];
 
-    if (
-      areaData.type === "polygon" &&
-      Array.isArray(areaData.points) &&
-      areaData.points.length >= 3
-    ) {
-      selectedAreaType = "polygon";
-      selectedAreaPolygonPoints = areaData.points;
-      selectedAreaBounds = getBoundsFromPoints(areaData.points);
-      fitMapToBounds(selectedAreaBounds);
-      map.setZoom(17.4);
-    } else if (
-      areaData.type === "rectangle" &&
-      Array.isArray(areaData.bounds)
-    ) {
-      selectedAreaType = "rectangle";
-      selectedAreaPolygonPoints = [];
-
-      const bounds = getBoundsFromPoints(areaData.bounds);
-      selectedAreaBounds = bounds;
-      fitMapToBounds(bounds);
-      map.setZoom(19);
-    } else {
-      alert("selected-area.json 형식이 올바르지 않습니다");
-      return;
-    }
-
-    generateGrid();
-    addGrayscaleMaskOutsideArea();
-  } catch (error) {
-    console.log("선택된 영역 파일이 없습니다:", error);
+    const bounds = getBoundsFromPoints(areaData.bounds);
+    selectedAreaBounds = bounds;
+    fitMapToBounds(bounds);
+    map.setZoom(19);
   }
+
+  generateGrid();
+  addGrayscaleMaskOutsideArea();
 }
 
 function addGrayscaleMaskOutsideArea() {
@@ -1358,6 +1369,22 @@ function initializeColorPalette() {
     eraseBtn.appendChild(eraseImg);
     eraseBtn.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (isEraseMode) {
+        isEraseMode = false;
+        eraseBtn.classList.remove("selected");
+        const fallbackColor = PALETTE_COLORS[0];
+        currentPixelColor = fallbackColor;
+        const colorButtons = document.querySelectorAll(".color-button");
+        colorButtons.forEach((btn) => {
+          btn.classList.remove("selected");
+        });
+        if (colorButtons.length > 0) {
+          colorButtons[0].classList.add("selected");
+        }
+        updatePaintButtonLabel();
+        return;
+      }
+
       isEraseMode = true;
       eraseBtn.classList.add("selected");
       document.querySelectorAll(".color-button").forEach((btn) => {
@@ -1459,8 +1486,55 @@ function updatePaintButtonLabel() {
   }
 }
 
+function focusCurrentLocation() {
+  if (!navigator.geolocation) {
+    return;
+  }
+
+  currentLocationBtn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+
+      if (!currentLocationMarker) {
+        const markerEl = document.createElement("div");
+        markerEl.style.width = "14px";
+        markerEl.style.height = "14px";
+        markerEl.style.borderRadius = "50%";
+        markerEl.style.background = "#ff2f2f";
+        markerEl.style.border = "2px solid #ffffff";
+        markerEl.style.boxShadow = "0 0 0 2px rgba(255, 47, 47, 0.35)";
+
+        currentLocationMarker = new maplibregl.Marker({ element: markerEl })
+          .setLngLat([longitude, latitude])
+          .addTo(map);
+      } else {
+        currentLocationMarker.setLngLat([longitude, latitude]);
+      }
+
+      map.flyTo({
+        center: [longitude, latitude],
+        zoom: Math.max(map.getZoom(), 18),
+        essential: true,
+      });
+
+      currentLocationBtn.disabled = false;
+    },
+    () => {
+      currentLocationBtn.disabled = false;
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    },
+  );
+}
+
 map.on("load", () => {
   mapReady = true;
+  startVisibleImageRefreshInterval();
 
   initializeColorPalette();
   updatePaintButtonLabel();
@@ -1468,6 +1542,8 @@ map.on("load", () => {
   document
     .getElementById("toggleOpacityBtn")
     .addEventListener("click", toggleLayerOpacity);
+
+  currentLocationBtn.addEventListener("click", focusCurrentLocation);
 
   map.on("zoomend", updateVisibleCellImages);
   map.on("moveend", updateVisibleCellImages);
@@ -1490,6 +1566,13 @@ map.on("load", () => {
 
   loadOsmData();
   loadSelectedArea();
+});
+
+window.addEventListener("beforeunload", () => {
+  if (visibleImageRefreshIntervalId !== null) {
+    clearInterval(visibleImageRefreshIntervalId);
+    visibleImageRefreshIntervalId = null;
+  }
 });
 
 document.addEventListener("keydown", (event) => {

@@ -26,7 +26,7 @@ body {
   justify-content: flex-end;
   max-height: 96px;
   opacity: 1;
-  overflow: hidden;
+  overflow: visible;
   transition:
     max-height 0.2s ease-out,
     opacity 0.2s ease-out,
@@ -48,41 +48,105 @@ body {
   box-shadow: none;
 }
 
-#toggleOpacityBtn {
-  width: 55px;
-  height: 55px;
+#toggleOpacityBtn,
+#erasePaletteBtn,
+#closePaletteBtn,
+#currentLocationBtn {
+  position: absolute;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: #909090;
+  background: #efefef;
+  border: 2px solid #d7d7d7;
   color: white;
   cursor: pointer;
-  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
-  flex-shrink: 0;
-  image-rendering: pixelated;
   padding: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  border: 2px solid #7d7d7d;
-  position: absolute;
+  font-size: 18px;
+  line-height: 1;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    opacity 0.2s;
+  z-index: 1001;
+}
+
+#toggleOpacityBtn,
+#currentLocationBtn {
   left: 16px;
-  bottom: 12px;
   pointer-events: auto;
 }
 
-#toggleOpacityBtn img {
-  width: 24px;
-  height: 24px;
+#toggleOpacityBtn {
+  top: 12px;
+  flex-shrink: 0;
+}
+
+#currentLocationBtn {
+  top: 60px;
+}
+
+#erasePaletteBtn {
+  left: 16px;
+  bottom: 12px;
+  pointer-events: none;
+  opacity: 0;
+  outline: none;
+}
+
+#closePaletteBtn {
+  right: 16px;
+  color: #6e6e6e;
+  pointer-events: none;
+  opacity: 0;
+}
+
+#toggleOpacityBtn img,
+#erasePaletteBtn img,
+#currentLocationBtn img {
+  width: 20px;
+  height: 20px;
   image-rendering: pixelated;
 }
 
-#toggleOpacityBtn:hover {
-  background: #787878;
+#currentLocationBtn img {
+  object-fit: cover;
 }
 
-#toggleOpacityBtn.active {
-  background: #3daae3;
+#toggleOpacityBtn:hover,
+#erasePaletteBtn:hover,
+#closePaletteBtn:hover,
+#currentLocationBtn:hover {
+  background: #dedede;
+}
+
+#toggleOpacityBtn.active,
+#toggleOpacityBtn.selected,
+#erasePaletteBtn.active,
+#erasePaletteBtn.selected,
+#closePaletteBtn.active,
+#closePaletteBtn.selected,
+#currentLocationBtn.active,
+#currentLocationBtn.selected {
+  background: #bcbcbc;
+}
+
+#toggleOpacityBtn.active:hover,
+#toggleOpacityBtn.selected:hover,
+#erasePaletteBtn.active:hover,
+#erasePaletteBtn.selected:hover,
+#closePaletteBtn.active:hover,
+#closePaletteBtn.selected:hover,
+#currentLocationBtn.active:hover,
+#currentLocationBtn.selected:hover {
+  background: #a9a9a9;
+}
+
+#currentLocationBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 #paintBtnContainer {
@@ -157,55 +221,6 @@ body {
   pointer-events: auto;
 }
 
-#closePaletteBtn {
-  display: flex;
-  position: absolute;
-  right: 16px;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: #f5f5f5;
-  border: 1px solid #999;
-  border-radius: 200px;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  color: #333;
-  transition: all 0.2s;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  pointer-events: none;
-  opacity: 0;
-}
-
-#erasePaletteBtn {
-  display: flex;
-  position: absolute;
-  left: 85px;
-  bottom: 12px;
-  width: 55px;
-  height: 55px;
-  padding: 0;
-  background: #909090;
-  border: 2px solid #7d7d7d;
-  outline: none;
-  border-radius: 50%;
-  cursor: pointer;
-  line-height: 1;
-  transition: all 0.2s;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  pointer-events: none;
-  opacity: 0;
-}
-
-#erasePaletteBtn img {
-  width: 24px;
-  height: 24px;
-}
-
 #floatingToolbar.palette-open #closePaletteBtn {
   opacity: 1;
   pointer-events: auto;
@@ -214,22 +229,6 @@ body {
 #floatingToolbar.palette-open #erasePaletteBtn {
   opacity: 1;
   pointer-events: auto;
-}
-
-#closePaletteBtn:hover {
-  background: #e0e0e0;
-}
-
-#erasePaletteBtn:hover {
-  background: #787878;
-}
-
-#erasePaletteBtn.selected {
-  background: #3daae3;
-}
-
-#erasePaletteBtn.selected:hover {
-  background: #2196f3;
 }
 
 .color-button {
@@ -440,9 +439,10 @@ body {
 }
 
 .auth-btn {
-  padding: 8px 16px;
+  height: 36px;
+  padding: 0 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 18px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
@@ -455,16 +455,6 @@ body {
 
 #loginBtn:hover {
   background: #1976d2;
-}
-
-#registerBtn {
-  background: white;
-  color: #2196f3;
-  border: 2px solid #2196f3;
-}
-
-#registerBtn:hover {
-  background: #e3f2fd;
 }
 
 #logoutBtn {
@@ -563,6 +553,23 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.modal-switch-text {
+  margin: 14px 0 0;
+  font-size: 14px;
+  color: #555;
+  text-align: center;
+}
+
+#loginToRegisterLink {
+  color: #2196f3;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+#loginToRegisterLink:hover {
+  color: #1976d2;
 }
 
 .submit-btn {

@@ -30,10 +30,8 @@
       </div>
       <div id="authButtons">
         <button id="loginBtn" class="auth-btn">로그인</button>
-        <button id="registerBtn" class="auth-btn">회원가입</button>
       </div>
     </div>
-
     <div id="loginModal" class="modal">
       <div class="modal-content">
         <h2>로그인</h2>
@@ -53,6 +51,10 @@
           <button class="cancel-btn" id="loginCancelBtn">취소</button>
           <button class="submit-btn" id="loginSubmitBtn">로그인</button>
         </div>
+        <p class="modal-switch-text">
+          계정이 없나요?
+          <a href="#" id="loginToRegisterLink">회원가입</a>
+        </p>
       </div>
     </div>
 
@@ -82,15 +84,17 @@
         </div>
       </div>
     </div>
-
+    <button id="currentLocationBtn" title="현재 위치 보기">
+      <img src="src/location.png" alt="현재 위치" />
+    </button>
+    <button id="toggleOpacityBtn" title="그림 투명하게 하기">
+      <img src="src/opacity.png" alt="그림 투명하게 하기" />
+    </button>
     <div id="info">
       <p>노드: <span id="nodeCount">0</span></p>
       <p>웨이: <span id="wayCount">0</span></p>
     </div>
     <div id="floatingToolbar">
-      <button id="toggleOpacityBtn" title="픽셀 투명도 토글">
-        <img src="src/opacity.png" alt="투명도 토글" />
-      </button>
       <div id="paintBtnContainer">
         <button id="paintBtn">
           <img src="src/pen.png" alt="pen" /><span>시작하기</span>
